@@ -1,12 +1,60 @@
-## MeshBench
-An RF-accurate MeshCore network emulator/simulator.
+# MeshBench
 
-It runs **real MeshCore firmware** — the actual C++ from `meshcore-dev/MeshCore`,
-compiled for the host, driven through **its own radio driver over real
-RadioLib** — against a **sample-accurate LoRa baseband channel** with real
-noise.
+An RF-accurate MeshCore network simulator: **real MeshCore firmware** against a
+**sample-accurate LoRa baseband channel** with real noise. The question it
+answers is not "would a packet get through" but "what arrived at the antenna,
+and why".
 
-The channel does not decide whether a packet arrives. It sums waveforms, applies
-path loss over real terrain, adds thermal noise, and lets each receiver's
-demodulator find out. Capture effect, partial collisions and sensitivity are
-*emergent*, not rules someone wrote down.
+Firmware runs one of two ways. **Native** compiles MeshCore for the host.
+**Emulated** runs the image people actually flash, unmodified, inside an
+emulator — and that is what the forks below are for.
+
+## The forks, and what each one carries
+
+Every one is upstream plus a patch we maintain, not a rewrite. They are here so
+that setting MeshBench up is a download rather than an afternoon with a
+toolchain.
+
+| repository | branch | upstream | what it adds |
+|---|---|---|---|
+| [qemu](https://github.com/MeshBench/qemu) | `meshbench-sx1262` | Espressif's QEMU fork | An SX1262 SPI device, a working GPIO implementation, and machine properties for the radio wiring. Upstream's GPIO write handler is empty, and RadioLib drives chip select as an ordinary GPIO — without it the chip sees an unframed byte stream and the driver reports no chip present. |
+| [tlib](https://github.com/MeshBench/tlib) | `sevonpend-any-pending` | [antmicro/tlib](https://github.com/antmicro/tlib) | SEVONPEND generates an event for *any* exception entering the pending state, not only ones the CPU would accept. ARM DDI0403E B1.5.17 does not qualify it by whether the exception is enabled. |
+| [renode-infrastructure](https://github.com/MeshBench/renode-infrastructure) | `sevonpend-any-pending` | [renode/renode-infrastructure](https://github.com/renode/renode-infrastructure) | The C# half of that fix: the NVIC can answer the wider question, and setting the event flag now wakes a CPU already asleep. |
+| [renode](https://github.com/MeshBench/renode) | `meshbench` | [renode/renode](https://github.com/renode/renode) | Ties the two together and builds a portable package in CI, runtime included. Also asserts both halves of the fix are in the tree it built. |
+
+### Why SEVONPEND mattered
+
+Firmware sets it so that an interrupt entering the pending state wakes `WFE`
+*even while that interrupt is disabled*, then reads ISPR and handles the source
+in thread mode without ever taking the interrupt. The interrupt being disabled
+is the point of the idiom.
+
+Renode asked whether a pending interrupt could be **taken**, which a disabled
+one never can — so MeshCore's published nRF52 builds slept for ever with their
+wake condition already true. It took three changes in three places, and with the
+first two in place the emulator built, loaded, ran, and behaved exactly as
+before. A fix that is absent and a fix that is wrong look identical from
+outside.
+
+## The rest
+
+| repository | what it is |
+|---|---|
+| [meshcore-native](https://github.com/MeshBench/meshcore-native) | Host and cross builds of MeshCore, the virtual SX1262, the bridge, and the radio model both emulators talk to |
+| [meshbench-reports](https://github.com/MeshBench/meshbench-reports) | Published reports |
+
+One chip model serves all three backends. `VirtualSX1262` runs in process for a
+native node, and `radioserver` puts the same object behind a socket for QEMU and
+Renode. Two models of one chip would have to agree for ever, and the first time
+they drifted every comparison between an ARM node and an ESP32 node would be
+measuring our code rather than MeshCore's.
+
+## Not ours
+
+[MeshCore](https://github.com/meshcore-dev/MeshCore) is upstream and
+**unmodified** — the build points at a checkout and compiles it as it stands,
+which is the whole basis of the claim that this runs real firmware. Board images
+come from its releases.
+
+The Nordic SoftDevice is not ours and cannot be redistributed: anyone running a
+published nRF52 image supplies their own copy.
