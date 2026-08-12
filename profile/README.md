@@ -22,32 +22,12 @@ toolchain.
 | [renode-infrastructure](https://github.com/MeshBench/renode-infrastructure) | `sevonpend-any-pending` | [renode/renode-infrastructure](https://github.com/renode/renode-infrastructure) | The C# half of that fix: the NVIC can answer the wider question, and setting the event flag now wakes a CPU already asleep. |
 | [renode](https://github.com/MeshBench/renode) | `meshbench` | [renode/renode](https://github.com/renode/renode) | Ties the two together and builds a portable package in CI, runtime included. Also asserts both halves of the fix are in the tree it built. |
 
-### Why SEVONPEND mattered
-
-Firmware sets it so that an interrupt entering the pending state wakes `WFE`
-*even while that interrupt is disabled*, then reads ISPR and handles the source
-in thread mode without ever taking the interrupt. The interrupt being disabled
-is the point of the idiom.
-
-Renode asked whether a pending interrupt could be **taken**, which a disabled
-one never can — so MeshCore's published nRF52 builds slept for ever with their
-wake condition already true. It took three changes in three places, and with the
-first two in place the emulator built, loaded, ran, and behaved exactly as
-before. A fix that is absent and a fix that is wrong look identical from
-outside.
-
 ## The rest
 
 | repository | what it is |
 |---|---|
 | [meshcore-native](https://github.com/MeshBench/meshcore-native) | Host and cross builds of MeshCore, the virtual SX1262, the bridge, and the radio model both emulators talk to |
 | [meshbench-reports](https://github.com/MeshBench/meshbench-reports) | Published reports |
-
-One chip model serves all three backends. `VirtualSX1262` runs in process for a
-native node, and `radioserver` puts the same object behind a socket for QEMU and
-Renode. Two models of one chip would have to agree for ever, and the first time
-they drifted every comparison between an ARM node and an ESP32 node would be
-measuring our code rather than MeshCore's.
 
 ## Not ours
 
