@@ -25,14 +25,14 @@ toolchain.
 
 | repository | branch | upstream | what it adds |
 |---|---|---|---|
-| [qemu](https://github.com/MeshBench/qemu) | `meshbench-sx1262` | Espressif's QEMU fork, 9.2.2 | An SX1262 on the SPI bus, the GPIO and interrupt behaviour MeshCore relies on, and enough of an ESP32-S3 for a published board image to boot and reach the air. Itemised below. |
-| [tlib](https://github.com/MeshBench/tlib) | `sevonpend-any-pending` | [antmicro/tlib](https://github.com/antmicro/tlib) | SEVONPEND generates an event for *any* exception entering the pending state, not only ones the CPU would accept. ARM DDI0403E B1.5.17 does not qualify it by whether the exception is enabled, and MeshCore's published nRF52 builds sleep on `WFE` expecting the wider behaviour. |
-| [renode-infrastructure](https://github.com/MeshBench/renode-infrastructure) | `sevonpend-any-pending` | [renode/renode-infrastructure](https://github.com/renode/renode-infrastructure) | The C# half of that fix: the NVIC can answer the wider question, and setting the event flag now wakes a CPU already asleep. |
-| [renode](https://github.com/MeshBench/renode) | `meshbench` | [renode/renode](https://github.com/renode/renode) | Ties the two together and builds a portable package in CI, runtime included. Also asserts both halves of the fix are in the tree it built. |
+| [qemu](https://github.com/MeshBench/qemu) | `meshbench-main` | Espressif's QEMU fork, 9.2.2 | An SX1262 on the SPI bus, the GPIO and interrupt behaviour MeshCore relies on, and enough of an ESP32-S3 for a published board image to boot and reach the air. Itemised below. |
+| [tlib](https://github.com/MeshBench/tlib) | `meshbench-main` | [antmicro/tlib](https://github.com/antmicro/tlib) | SEVONPEND generates an event for *any* exception entering the pending state, not only ones the CPU would accept. ARM DDI0403E B1.5.17 does not qualify it by whether the exception is enabled, and MeshCore's published nRF52 builds sleep on `WFE` expecting the wider behaviour. |
+| [renode-infrastructure](https://github.com/MeshBench/renode-infrastructure) | `meshbench-main` | [renode/renode-infrastructure](https://github.com/renode/renode-infrastructure) | The C# half of that fix: the NVIC can answer the wider question, and setting the event flag now wakes a CPU already asleep. |
+| [renode](https://github.com/MeshBench/renode) | `meshbench-main` | [renode/renode](https://github.com/renode/renode) | Ties the two together and builds a portable package in CI, runtime included. Also asserts both halves of the fix are in the tree it built. |
 
 ### What the QEMU fork carries
 
-`meshbench-sx1262` is the integration branch; each item below landed on its own
+`meshbench-main` is the integration branch, and the default; each item below landed on its own
 branch first, and each one was a board that would not boot, would not transmit,
 or would not relay until it went in.
 
