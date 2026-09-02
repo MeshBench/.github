@@ -1,6 +1,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/MeshBench/.github/main/profile/banner.png">
-  <img alt="MeshBench — an RF-accurate MeshCore network simulator" src="https://raw.githubusercontent.com/MeshBench/.github/main/profile/banner-light.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/MeshBench/.github/main/profile/banner-light.png">
+  <img alt="MeshBench: an RF-accurate MeshCore network simulator" src="https://raw.githubusercontent.com/MeshBench/.github/main/profile/banner-light.png">
 </picture>
 
 An RF-accurate MeshCore network simulator: **real MeshCore firmware** against a
