@@ -10,13 +10,13 @@ answers is not "would a packet get through" but "what arrived at the antenna,
 and why".
 
 The channel decides nothing. It sums waveforms, applies path loss over real
-terrain, adds thermal noise, and lets each receiver's demodulator find out —
-so capture effect, partial collisions and sensitivity are *emergent* rather than
+terrain, adds thermal noise, and lets each receiver's demodulator find out, so
+capture effect, partial collisions and sensitivity are *emergent* rather than
 rules somebody wrote down.
 
 Firmware runs one of two ways. **Native** compiles MeshCore for the host.
 **Emulated** runs the image people actually flash, unmodified, inside an
-emulator — and that is what the forks below are for.
+emulator - and that is what the forks below are for.
 
 ## The forks, and what each one carries
 
@@ -38,7 +38,11 @@ branch first, and each one was a board that would not boot, would not transmit,
 or would not relay until it went in.
 
 - **An SX1262 SPI device**, with the front-end module's enable line brought in
-  from the board, and a socket — path or `host:port` — to the radio model.
+  from the board. It holds the chip itself, loading
+  [virtual-sx1262](https://github.com/MeshBench/virtual-sx1262) at runtime, and
+  the one socket it opens goes to the RF engine, because the channel is shared
+  with every other node in a scenario. It used to forward each clocked byte to a
+  separate process and read the answering byte back.
 - **A working GPIO implementation, and interrupts from a pin.** Upstream's
   write handler is empty, and RadioLib drives chip select as an ordinary GPIO,
   so without it the chip sees an unframed byte stream and the driver reports no
@@ -46,20 +50,20 @@ or would not relay until it went in.
   radio that never finishes a transmission.
 - **The ESP32-S3's general-purpose SPI controllers.** Arduino's default
   `SPIClass` is HSPI, which is controller 2 on an ESP32 and controller **3** on
-  an S3 — and only the flash controller's register layout was modelled, where a
+  an S3 - and only the flash controller's register layout was modelled, where a
   transfer starts on a different bit and the data sits at a different offset.
 - **GPIO0 coming up high, as its pull-up makes it.** Every input read low out of
   reset. GPIO0 is a strapping pin, and reading it low is the program button held
-  down, so MeshCore powered the board off after two minutes — every time, before
+  down, so MeshCore powered the board off after two minutes - every time, before
   it had adverted once.
 - **A GigaDevice part's quad-enable bit.** The flash model knew those parts by
-  name and handled the bit nowhere, so it could be written and never took —
-  which failed `esp_flash_init_default_chip()` on the QIO-built S3 images and
+  name and handled the bit nowhere, so it could be written and never took, which
+  failed `esp_flash_init_default_chip()` on the QIO-built S3 images and
   left them restarting for ever, 360 times in one probe.
 - **The rest of a board**: an I2C controller and the panel on it, two devices
   sharing one SPI bus with a colour display, the board's own buttons, a
   keyboard and touch panel, an ADC that answers, and a card slot that keeps
-  quiet. An unmodelled input is not a zero — it is a spin.
+  quiet. An unmodelled input is not a zero - it is a spin.
 - **Peripheral windows that say what they swallowed**, so the next one of these
   is an hour rather than a week.
 
@@ -67,14 +71,15 @@ or would not relay until it went in.
 
 | repository | what it is |
 |---|---|
-| [meshcore-native](https://github.com/MeshBench/meshcore-native) | Host and cross builds of MeshCore, the virtual SX1262, the bridge, and the radio model both emulators talk to |
+| [meshcore-native](https://github.com/MeshBench/meshcore-native) | Host and cross builds of MeshCore, and the bridge that puts one on the simulated air |
+| [virtual-sx1262](https://github.com/MeshBench/virtual-sx1262) | The chip itself, with a C ABI and no dependencies beyond the C++ standard library. Four things link it: MeshCore built for the host, the QEMU fork, Renode's peripheral, and the simulator. **MIT, and it has to stay permissive** - QEMU is GPLv2 and MeshBench is GPL-3.0-or-later, and no one copyleft licence can serve both. |
 | [meshbench-reports](https://github.com/MeshBench/meshbench-reports) | Studies of how MeshCore actually behaves, run on real firmware against a simulated radio and channel |
 | [gio](https://github.com/MeshBench/gio) | Mirror of [Gio](https://gioui.org), the toolkit the workbench is built in, carrying a branch that adds Wayland layer-shell windows. The build tracks upstream today. |
 
 ## Not ours
 
 [MeshCore](https://github.com/meshcore-dev/MeshCore) is upstream and
-**unmodified** — the build points at a checkout and compiles it as it stands,
+**unmodified** - the build points at a checkout and compiles it as it stands,
 which is the whole basis of the claim that this runs real firmware. Board images
 come from its releases.
 
